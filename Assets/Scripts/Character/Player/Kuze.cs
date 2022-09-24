@@ -9,6 +9,19 @@ public class Kuze : APlayer
     // TODO(mish question): This should be refactored? Maybe have an automatic animation
     // loader.
     public Animator anim;
+    public GameObject rigRef;
+    private Collider livingCollider;
+    private Collider[] limbColliders;
+    private Rigidbody[] limbPhysicsBodies;
+
+    void Awake()
+    {
+        livingCollider = GetComponent<CapsuleCollider>();
+        limbColliders = rigRef.GetComponentsInChildren<Collider>();
+        limbPhysicsBodies = rigRef.GetComponentsInChildren<Rigidbody>();
+        
+        SetRagdollMode(false);
+    }
 
     protected override void StartPlayer()
     {
@@ -45,6 +58,32 @@ public class Kuze : APlayer
             anim.SetBool("isMoving", isMoving);
             anim.SetBool("isFiring", Input.GetMouseButton(0));
         }
+    }
+    
+    private void SetRagdollMode(bool isFlailing)
+    {
+        anim.enabled = !isFlailing;
+        livingCollider.enabled = !isFlailing;
+        
+        foreach (var collider in limbColliders)
+        {
+            collider.enabled = isFlailing;
+        }
+        
+        foreach (var rigidbody in limbPhysicsBodies)
+        {
+            rigidbody.isKinematic = !isFlailing;
+        }
+    }
+    
+    // NOTE(cameron): Have to put this here for now since animations are on the particular
+    // character. Depending on how we change Animator, we might want to decouple this through
+    // events (RagdollListener -- accepts an Animator and the limbs)
+    public override void Kill() {
+        base.Kill();
+        
+        // It's ragdolling time.
+        SetRagdollMode(true);
     }
 }
 
