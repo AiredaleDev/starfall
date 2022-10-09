@@ -43,7 +43,6 @@ public abstract class SCharacter : MonoBehaviour, IDamageable, ICharacterControl
     public Vector3 gravity = new Vector3(0, -30f, 0);
     public Collider Collider;
 
-
     //Moving and jumping
     protected Vector3 moveInputVector;
     protected Vector3 lookInputVector;
@@ -63,7 +62,46 @@ public abstract class SCharacter : MonoBehaviour, IDamageable, ICharacterControl
     protected Vector3 targetPoint;
     protected bool reloadedThisFrame;
 
-    
+    // Ragdoll references
+    private GameObject _rig;
+    protected Animator _anim;
+    private Rigidbody[] _limbRigidbodies;
+    private Collider[] _limbColliders;
+
+    void Awake()
+    {
+        // Ragdoll setup
+        // Manually traverse GameObject tree because Unity is stupid.
+        // Invariant: There should only ever be one thing tagged as "Rig", the root of the model.
+        foreach (Transform t in gameObject.transform)
+        {
+            if (t.CompareTag("Rig")) 
+            {
+                _rig = t.gameObject;
+                break;
+            }
+        }
+        
+        _anim = GetComponentInChildren<Animator>();
+        // This guy cannot get ptrs to any of them
+        _limbColliders = _rig.GetComponentsInChildren<Collider>();
+        _limbRigidbodies = _rig.GetComponentsInChildren<Rigidbody>();
+        
+        if (_limbColliders.Length == 0) {
+            Debug.LogError($"BRUH WHERE MY COLLIDERS AT?! from {gameObject.name}");
+        }
+        
+        foreach (Collider col in _limbColliders)
+        {
+            col.enabled = false;
+        }
+        
+        foreach (Rigidbody rb in _limbRigidbodies)
+        {
+            rb.isKinematic = true;
+            rb.detectCollisions = false;
+        }
+    }
 
     void Start()
 	{
@@ -180,7 +218,30 @@ public abstract class SCharacter : MonoBehaviour, IDamageable, ICharacterControl
         weaponGameObject.transform.SetParent(null);
         motor.enabled = false;
         this.enabled = false;
+        Ragdoll();
     }
+    
+    private void Ragdoll()
+    {
+        // Guarding against error-reporting conditions.
+        // Invariant: these two will always have the same count.
+        if (_limbColliders.Length > 0 && _limbRigidbodies.Length > 0) {
+            Collider.enabled = false;
+            foreach (Collider col in _limbColliders)
+            {
+                col.enabled = true;
+            }
+            
+            foreach (Rigidbody rb in _limbRigidbodies)
+            {
+                rb.isKinematic = false;
+            }
+        } else {
+            // TODO(cameron): better error reporting
+            // Alternatively, just don't even consider this branch if we want some characters that die w/o ragdolling.
+            Debug.LogWarning("Attempted to ragdoll a character without a ragdoll! Nothing happens.");
+        }
+    }    
 
     //These functions can be overridden in subclasses for more flexibility
     public void UpdateRotation(ref Quaternion currentRotation, float deltaTime)

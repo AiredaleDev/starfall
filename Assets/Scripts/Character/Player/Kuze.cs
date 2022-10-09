@@ -3,13 +3,6 @@ using UnityEngine;
 
 public class Kuze : APlayer
 {
-
-    //TEMPORARY, HACKY ANIMATION CONTROLLER FOR PITCH
-    //TODO (ben): FIX THIS TRASH
-    // TODO(mish question): This should be refactored? Maybe have an automatic animation
-    // loader.
-    private Animator _anim;
-
     private MoveFastAbility _moveFastAbility;
     private static readonly int IsFiring = Animator.StringToHash("isFiring");
     private static readonly int VelX = Animator.StringToHash("velX");
@@ -43,6 +36,10 @@ public class Kuze : APlayer
     protected override void HandlePlayerInputs()
     {
         HandleAnimationInputs();
+        
+        // FIXME(cameron): remove debug killbind
+        if (Input.GetKey(KeyCode.F))
+            Kill();
 
         // Implement other Kuze specific inputs here
 
