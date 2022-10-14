@@ -210,11 +210,15 @@ public abstract class SCharacter : MonoBehaviour, IDamageable, ICharacterControl
 
 	public virtual void Kill()
     {
+        /*
         var rb = gameObject.AddComponent<Rigidbody>();
         rb.AddForce(Random.insideUnitSphere * 5f, ForceMode.Impulse);
+        */
         var weaponGameObject = _weapon.gameObject;
+        /*
         weaponGameObject.AddComponent<Rigidbody>();
         weaponGameObject.AddComponent<BoxCollider>();
+        */
         weaponGameObject.transform.SetParent(null);
         motor.enabled = false;
         this.enabled = false;
@@ -223,23 +227,15 @@ public abstract class SCharacter : MonoBehaviour, IDamageable, ICharacterControl
     
     private void Ragdoll()
     {
-        // Guarding against error-reporting conditions.
-        // Invariant: these two will always have the same count.
-        if (_limbColliders.Length > 0 && _limbRigidbodies.Length > 0) {
-            Collider.enabled = false;
-            foreach (Collider col in _limbColliders)
-            {
-                col.enabled = true;
-            }
-            
-            foreach (Rigidbody rb in _limbRigidbodies)
-            {
-                rb.isKinematic = false;
-            }
-        } else {
-            // TODO(cameron): better error reporting
-            // Alternatively, just don't even consider this branch if we want some characters that die w/o ragdolling.
-            Debug.LogWarning("Attempted to ragdoll a character without a ragdoll! Nothing happens.");
+        Collider.enabled = false;
+        foreach (Collider col in _limbColliders)
+        {
+            col.enabled = true;
+        }
+        
+        foreach (Rigidbody rb in _limbRigidbodies)
+        {
+            rb.isKinematic = false;
         }
     }    
 
